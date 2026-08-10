@@ -13,6 +13,7 @@ from api.src.inference.base import AudioChunk
 from api.src.main import app
 from api.src.routers.openai_compatible import (
     _resolve_download_name,
+    _scale_timings,
     get_tts_service,
     load_openai_mappings,
     stream_audio_chunks,
@@ -22,6 +23,37 @@ from api.src.services.tts_service import TTSService
 from api.src.structures.schemas import OpenAISpeechRequest
 
 client = TestClient(app)
+
+
+def test_atempo_request_validation():
+    request = OpenAISpeechRequest(input="Hello")
+    assert request.atempo == 1.0
+    assert request.speed == 1.0
+
+    for atempo in (0.25, 4.0):
+        assert OpenAISpeechRequest(input="Hello", atempo=atempo).atempo == atempo
+
+
+def test_atempo_request_rejects_out_of_range_values():
+    for atempo in (0.24, 4.01):
+        response = client.post(
+            "/v1/audio/speech",
+            json={"input": "Hello", "atempo": atempo},
+        )
+        assert response.status_code == 422
+
+
+def test_scale_timings_for_atempo():
+    timings = [
+        {"text": "Hello", "start": 0.0, "end": 1.0, "voice": "af_bella"},
+        {"text": "", "start": 1.0, "end": 1.5},
+    ]
+
+    assert _scale_timings(timings, 2.0) == [
+        {"text": "Hello", "start": 0.0, "end": 0.5, "voice": "af_bella"},
+        {"text": "", "start": 0.5, "end": 0.75},
+    ]
+    assert _scale_timings(timings, 1.0) is timings
 
 
 @pytest.fixture
@@ -246,6 +278,9 @@ def mock_tts_service(mock_audio_bytes):
         service.generate_audio.return_value = AudioChunk(np.zeros(1000, np.int16))
 
         async def mock_stream(*args, **kwargs) -> AsyncGenerator[AudioChunk, None]:
+            timings = kwargs.get("timings")
+            if timings is not None:
+                timings.append({"text": "Hello world", "start": 0.0, "end": 1.0})
             yield AudioChunk(np.ndarray([], np.int16), output=mock_audio_bytes)
 
         service.generate_audio_stream = mock_stream
@@ -308,6 +343,27 @@ def test_openai_speech_streaming(mock_tts_service, test_voice, mock_audio_bytes)
     for chunk in response.iter_bytes():
         content += chunk
     assert content == mock_audio_bytes
+
+
+@patch("api.src.routers.openai_compatible.StreamingAudioWriter")
+def test_openai_speech_passes_atempo_to_writer(
+    mock_writer, mock_tts_service, test_voice
+):
+    response = client.post(
+        "/v1/audio/speech",
+        json={
+            "model": "kokoro",
+            "input": "Hello world",
+            "voice": test_voice,
+            "response_format": "mp3",
+            "stream": True,
+            "speed": 0.8,
+            "atempo": 1.5,
+        },
+    )
+
+    assert response.status_code == 200
+    mock_writer.assert_called_once_with("mp3", sample_rate=24000, atempo=1.5)
 
 
 def test_openai_speech_pcm_streaming(mock_tts_service, test_voice, mock_audio_bytes):
@@ -1160,6 +1216,7 @@ def test_streaming_with_timing_sidecar(
                 "stream": True,
                 "return_download_link": True,
                 "return_timing": True,
+                "atempo": 2.0,
             },
         )
 
@@ -1176,7 +1233,9 @@ def test_streaming_with_timing_sidecar(
         "timing sidecar file should be written after stream completes"
     )
     sidecar = json.loads(sidecar_file.read_text())
-    assert "chunks" in sidecar
+    assert sidecar == {
+        "chunks": [{"text": "Hello world", "start": 0.0, "end": 0.5}]
+    }
 
 
 def test_streaming_without_timing_has_no_header(

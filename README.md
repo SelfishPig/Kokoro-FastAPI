@@ -186,11 +186,17 @@ response = client.audio.speech.create(
     model="kokoro",  
     voice="af_bella+af_sky", # see /api/src/core/openai_mappings.json to customize
     input="Hello world!",
-    response_format="mp3"
+    response_format="mp3",
+    extra_body={"atempo": 1.25}
 )
 
 response.stream_to_file("output.mp3")
 ```
+`speed` changes synthesis behavior. `atempo` is a separate post-processing
+multiplier from `0.25` to `4.0` that changes the returned audio tempo without
+changing pitch. Since `atempo` is a Kokoro-FastAPI extension, pass it through
+`extra_body` when using the OpenAI client.
+
 Or Via Requests:
 ```python
 import requests
@@ -207,7 +213,8 @@ response = requests.post(
         "input": "Hello world!",
         "voice": "af_bella",
         "response_format": "mp3",  # Supported: mp3, wav, opus, flac, aac, pcm
-        "speed": 1.0
+        "speed": 1.0,   # Changes synthesis speed
+        "atempo": 1.25  # Changes output tempo without changing pitch
     }
 )
 
@@ -641,6 +648,7 @@ timings = requests.get(f"http://localhost:8880/v1{response.headers['x-timing-pat
 - Chunk-level (a sentence group, roughly 10-20s of audio), not word-level. For word-level use `/dev/captioned_speech`.
 - The header arrives up front, but the file is written when generation finishes. Fetch it after the stream ends; earlier is a 404.
 - `start`/`end` are seconds in the final audio, so pauses and speed are already accounted for. `[pause:Ns]` gaps appear as `{"text": ""}` entries.
+- When `atempo` is set, sidecar times are adjusted to stay aligned with the returned audio.
 - `text` is normalized (numbers etc expanded), so align by words rather than exact match.
 - With `allow_voice_tags`, each spoken chunk also carries its `voice`, same as captioned timestamps. Absent otherwise.
 - The sidecar sits next to the download file and shares its temp lifetime.

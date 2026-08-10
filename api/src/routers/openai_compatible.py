@@ -173,6 +173,19 @@ def require_voice_tags_enabled() -> None:
         )
 
 
+def _scale_timings(timings: List[dict], atempo: float) -> List[dict]:
+    if atempo == 1.0:
+        return timings
+    return [
+        {
+            **timing,
+            "start": round(timing["start"] / atempo, 3),
+            "end": round(timing["end"] / atempo, 3),
+        }
+        for timing in timings
+    ]
+
+
 async def process_and_validate_voice_tags(
     text: str,
     tts_service: TTSService,
@@ -284,7 +297,9 @@ async def create_speech(
             "pcm": "audio/pcm",
         }.get(request.response_format, f"audio/{request.response_format}")
 
-        writer = StreamingAudioWriter(request.response_format, sample_rate=24000)
+        writer = StreamingAudioWriter(
+            request.response_format, sample_rate=24000, atempo=request.atempo
+        )
 
         # Check if streaming is requested (default for OpenAI client)
         if request.stream:
@@ -338,7 +353,9 @@ async def create_speech(
                         # Finalize the temp file
                         await temp_writer.finalize()
                         if timings is not None:
-                            await temp_writer.write_json_sidecar({"chunks": timings})
+                            await temp_writer.write_json_sidecar(
+                                {"chunks": _scale_timings(timings, request.atempo)}
+                            )
                     except Exception as e:
                         logger.error(f"Error in dual output streaming: {e}")
                         await temp_writer.__aexit__(type(e), e, e.__traceback__)

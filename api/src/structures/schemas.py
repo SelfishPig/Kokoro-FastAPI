@@ -142,6 +142,12 @@ class OpenAISpeechRequest(VoiceAliasesMixin):
         le=4.0,
         description="The speed of the generated audio. Select a value from 0.25 to 4.0.",
     )
+    atempo: float = Field(
+        default=1.0,
+        ge=0.25,
+        le=4.0,
+        description="Post-processing tempo applied to the returned audio without changing pitch. This is separate from synthesis speed.",
+    )
     stream: bool = Field(
         default=True,  # Default to streaming for OpenAI compatibility
         description="If true (default), audio will be streamed as it's generated. Each chunk will be a complete sentence.",

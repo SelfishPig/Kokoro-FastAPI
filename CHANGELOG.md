@@ -6,6 +6,7 @@ Per-PR attribution and contributor credits are published automatically on the co
 
 ## [Unreleased]
 ### Added
+- `/v1/audio/speech` accepts `atempo` to adjust the returned audio tempo without changing pitch, independently of synthesis `speed`.
 - Multi-speaker input (#294). Opt in per request with `allow_voice_tags: true`; disable server-wide with `ENABLE_VOICE_TAGS=false`.
   - Inline `[voice:name]` tags switch speaker mid-text.
   - `voice_aliases` mapping for named weighted voice mixes.

@@ -278,3 +278,39 @@ def test_finalize_preserves_tail(format):
     else:
         # lossy encoders pad with encoder delay, but must not truncate
         assert decoded >= len(audio)
+
+
+@pytest.mark.parametrize("atempo", [0.25, 0.5, 2.0, 4.0])
+def test_atempo_changes_duration_without_changing_pitch(atempo):
+    """Tempo filtering changes duration while retaining the source frequency."""
+    sample_rate = 24000
+    t = np.arange(2 * sample_rate) / sample_rate
+    audio = (np.sin(2 * np.pi * 440 * t) * 20000).astype(np.int16)
+    writer = StreamingAudioWriter("pcm", sample_rate=sample_rate, atempo=atempo)
+
+    chunks = [writer.write_chunk(chunk) for chunk in np.array_split(audio, 4)]
+    chunks.append(writer.write_chunk(finalize=True))
+    output = np.frombuffer(b"".join(chunks), dtype=np.int16)
+
+    assert len(output) == pytest.approx(len(audio) / atempo, rel=0.15)
+    frequencies = np.fft.rfftfreq(len(output), 1 / sample_rate)
+    dominant_frequency = frequencies[np.argmax(np.abs(np.fft.rfft(output)))]
+    assert dominant_frequency == pytest.approx(440, abs=5)
+
+
+def test_atempo_encoded_output_flushes_filter_tail():
+    """Filtered samples buffered by atempo are encoded during finalization."""
+    import io
+
+    import av
+
+    sample_rate = 24000
+    t = np.arange(sample_rate) / sample_rate
+    audio = (np.sin(2 * np.pi * 440 * t) * 20000).astype(np.int16)
+    writer = StreamingAudioWriter("wav", sample_rate=sample_rate, atempo=0.5)
+    blob = writer.write_chunk(audio) + writer.write_chunk(finalize=True)
+
+    with av.open(io.BytesIO(blob)) as container:
+        decoded = sum(frame.samples for frame in container.decode(audio=0))
+
+    assert decoded == pytest.approx(len(audio) / 0.5, rel=0.1)
