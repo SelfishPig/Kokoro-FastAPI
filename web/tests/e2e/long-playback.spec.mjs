@@ -105,10 +105,12 @@ test('long MP3 generation uses MediaSource streaming', async ({ page }) => {
 
     await page.goto('/');
     await page.locator('.page-content').fill(longText());
+    await page.locator('#atempo-select').selectOption('1.5');
     await page.locator('#generate-btn').click();
     await expect.poll(() => speechRequestBody).not.toBeNull();
 
     expect(speechRequestBody.response_format).toBe('mp3');
+    expect(speechRequestBody.atempo).toBe(1.5);
     expect(speechRequestBody.stream).toBe(true);
     await expect.poll(() => page.evaluate(() => window.__mediaSourceConstructed)).toBeGreaterThan(0);
     await expect.poll(() => page.evaluate(() => window.__sourceBufferCreated)).toBeGreaterThan(0);

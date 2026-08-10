@@ -1,13 +1,13 @@
 name: kokoro-fastapi-cpu
 services:
   kokoro-tts:
-    # image: ghcr.io/remsky/kokoro-fastapi-cpu:v${VERSION}
+    # image: ghcr.io/selfishpig/kokoro-fastapi-cpu:v${VERSION}
     build:
       context: ../..
       dockerfile: docker/cpu/Dockerfile.optimized
       cache_from:
-        - ghcr.io/remsky/kokoro-fastapi-cache:cpu-amd64
-        - ghcr.io/remsky/kokoro-fastapi-cache:cpu-arm64
+        - ghcr.io/selfishpig/kokoro-fastapi-cache:cpu-amd64
+        - ghcr.io/selfishpig/kokoro-fastapi-cache:cpu-arm64
     volumes:
       - ../../api:/app/api
       - ../../web:/app/web  # hot reload the web player, files are read per request
@@ -19,4 +19,3 @@ services:
       - DOWNLOAD_MODEL=true
       # - ALLOW_DEV_UNLOAD=true
       # - ENABLE_DEBUG_ENDPOINTS=true
-

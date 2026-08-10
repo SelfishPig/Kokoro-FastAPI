@@ -16,12 +16,14 @@ Per-PR attribution and contributor credits are published automatically on the co
   - `POST /dev/dialogue` for ordered multi-speaker turns.
   - `/dev/captioned_speech` timestamps include the speaking `voice` when tags are on.
 - Web UI:
+  - Pitch-preserving `atempo` control, with language moved to its own settings row.
   - Voice alias/tag cast builder with import/export (re: parallel work by @radzrader, [#272](https://github.com/remsky/Kokoro-FastAPI/discussions/272)).
   - Read-along mode: sentence highlighting synced to playback, bidirectional click to seek.
   - Find/replace across pages, directly accessible page numbers.
   - Download menu (audio / chunk timings / both).
 
 ### Changed
+- Fork releases now publish only the CUDA 12.8 amd64 GPU image and the amd64/arm64 CPU image, with rolling `latest` tags for both. Hyphenated versions are marked as GitHub prereleases, and Compose builds use fork-owned caches.
 - Dropped unreachable list form of `voice` from the speech parser and unused `VoiceCombineRequest` schema.
 
 ### Fixed

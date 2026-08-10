@@ -123,9 +123,31 @@
                 <div class="settings-split">
                     <div class="setting-field">
                         <label for="speed-input">Speed</label>
-                        <input type="number" id="speed-input" class="speed-input" min="0.1" max="4" step="0.1" value="1.0" title="Playback speed (0.1 to 4)">
+                        <input type="number" id="speed-input" class="speed-input" min="0.1" max="4" step="0.1" value="1.0" title="TTS generation speed (0.1 to 4)">
                     </div>
                     <div class="setting-field">
+                        <label for="atempo-select">Atempo</label>
+                        <select id="atempo-select" class="atempo-select" title="Output speed without changing pitch">
+                            <option value="0.25">0.25×</option>
+                            <option value="0.5">0.5×</option>
+                            <option value="0.75">0.75×</option>
+                            <option value="1" selected>1×</option>
+                            <option value="1.25">1.25×</option>
+                            <option value="1.5">1.5×</option>
+                            <option value="2">2×</option>
+                            <option value="3">3×</option>
+                            <option value="4">4×</option>
+                        </select>
+                    </div>
+                    <div class="setting-field">
+                        <label for="format-select">Format</label>
+                        <select id="format-select" class="format-select">
+                            <option value="mp3">MP3</option>
+                            <option value="wav">WAV</option>
+                            <option value="pcm">PCM</option>
+                        </select>
+                    </div>
+                    <div class="setting-field language-field">
                         <label for="lang-select">Language</label>
                         <select id="lang-select" class="lang-select">
                             <option value="">Auto</option>
@@ -137,14 +159,6 @@
                             <option value="p">Portuguese</option>
                             <option value="j">Japanese</option>
                             <option value="z">Chinese</option>
-                        </select>
-                    </div>
-                    <div class="setting-field">
-                        <label for="format-select">Format</label>
-                        <select id="format-select" class="format-select">
-                            <option value="mp3">MP3</option>
-                            <option value="wav">WAV</option>
-                            <option value="pcm">PCM</option>
                         </select>
                     </div>
                 </div>

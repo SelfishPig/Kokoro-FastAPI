@@ -91,6 +91,7 @@ export class AudioService {
 
             const estimatedChunks = Math.max(1, Math.ceil(this.textLength / this.CHARS_PER_CHUNK));
             const responseFormat = document.getElementById('format-select').value || 'mp3';
+            const atempo = Number.parseFloat(document.getElementById('atempo-select').value);
             const canUseMseStream = this.shouldUseMseStream(responseFormat, canStreamMp3);
             this.downloadName = this.buildDownloadName(voice, responseFormat);
 
@@ -105,6 +106,7 @@ export class AudioService {
                     download_format: responseFormat,
                     stream: true,
                     speed: speed,
+                    atempo: Number.isFinite(atempo) ? atempo : 1,
                     return_download_link: true,
                     return_timing: true,
                     lang_code: document.getElementById('lang-select').value || undefined,

@@ -22,7 +22,12 @@
     font-size: 0.8125rem;
 }
 
+.language-field {
+    grid-column: 1 / -1;
+}
+
 .speed-input,
+.atempo-select,
 .lang-select,
 .format-select {
     background: rgba(15, 23, 42, 0.3);
@@ -39,12 +44,14 @@
 }
 
 .speed-input:hover,
+.atempo-select:hover,
 .lang-select:hover,
 .format-select:hover {
     border-color: var(--fg-color);
 }
 
 .speed-input:focus,
+.atempo-select:focus,
 .lang-select:focus,
 .format-select:focus {
     outline: none;
@@ -57,6 +64,7 @@
     padding-right: 0.2rem;
 }
 
+.atempo-select option,
 .lang-select option,
 .format-select option {
     background: var(--surface);

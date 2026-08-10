@@ -23,9 +23,9 @@ Dockerized FastAPI wrapper for [Kokoro-82M](https://huggingface.co/hexgrad/Kokor
 - Inline multi-speaker generation & voice mixing with weighted combinations
 - Per-word, or per-chunk timestamped caption generation
 - Phoneme endpoints: generate phonemes from text, or generate audio from phonemes
-- Prebuilt multiplatform images
-  - CPU and NVIDIA GPU (CUDA): linux/amd64 + linux/arm64
-  - AMD GPU (ROCm, experimental): linux/amd64 only
+- Prebuilt images
+  - CPU: linux/amd64 + linux/arm64
+  - NVIDIA GPU (CUDA 12.8): linux/amd64
 - Apple Silicon (MPS) supported when running directly via UV (no image)
 
 
@@ -40,33 +40,18 @@ Dockerized FastAPI wrapper for [Kokoro-82M](https://huggingface.co/hexgrad/Kokor
 <details>
 <summary>Quickest Start (docker run)</summary>
 
-Pre-built multi-arch images with models baked in. 
+Pre-built images with models baked in.
 
 `:latest` is available, but please pin to a release tag for stable usage.
 
 **No GPU** (laptop, CPU-only server)
 ```bash
-docker run -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-cpu:latest
+docker run -p 8880:8880 ghcr.io/selfishpig/kokoro-fastapi-cpu:latest
 ```
 
-**NVIDIA** (GTX 900-series through RTX 40; ships cu126)
+**NVIDIA** (CUDA 12.8 with cu128 PyTorch wheels, x86_64 only)
 ```bash
-docker run --gpus all -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-gpu:latest
-```
-
-**NVIDIA RTX 50-series / Blackwell** (ships cu128)
-```bash
-docker run --gpus all -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-gpu:latest-cu128
-```
-
-**NVIDIA arm64** (Jetson, GH200; same tag, ships cu129)
-```bash
-docker run --gpus all -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-gpu:latest
-```
-
-**AMD GPU** (ROCm, experimental, x86_64 only)
-```bash
-docker run --device=/dev/kfd --device=/dev/dri -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-rocm:latest
+docker run --gpus all -p 8880:8880 ghcr.io/selfishpig/kokoro-fastapi-gpu:latest
 ```
 
 **Apple Silicon** (native MPS, from a clone; the CPU image also works in Docker)
@@ -74,7 +59,7 @@ docker run --device=/dev/kfd --device=/dev/dri -p 8880:8880 ghcr.io/remsky/kokor
 ./start-gpu_mac.sh
 ```
 
-`gpu:latest` is the same image as `gpu:latest-cu126`. Configuration via environment variables, see `core/config.py`.
+Configuration via environment variables, see `core/config.py`.
 
 </details>
 
@@ -86,16 +71,13 @@ docker run --device=/dev/kfd --device=/dev/dri -p 8880:8880 ghcr.io/remsky/kokor
    - Install [Docker](https://www.docker.com/products/docker-desktop/)
    - Clone the repository:
         ```bash
-        git clone https://github.com/remsky/Kokoro-FastAPI.git
+        git clone https://github.com/SelfishPig/Kokoro-FastAPI.git
         cd Kokoro-FastAPI
 
         cd docker/gpu   # For NVIDIA GPU support
         # or cd docker/cpu   # For CPU support
         # or cd docker/rocm  # For AMD GPU (ROCm, experimental, amd64 only)
         docker compose up --build
-
-        # RTX 50-series / Blackwell local build:
-        KOKORO_GPU_EXTRA=gpu-cu128 KOKORO_CUDA_VERSION=12.8.1 docker compose up --build
 
         # *Note for Apple Silicon (M1/M2/M3) users:
         # The Docker GPU image is CUDA-only and won't run on Apple Silicon. With Docker, use `docker/cpu`.
@@ -119,7 +101,7 @@ docker run --device=/dev/kfd --device=/dev/dri -p 8880:8880 ghcr.io/remsky/kokor
    - Install [espeak-ng](https://github.com/espeak-ng/espeak-ng) in your system if you want it available as a fallback for unknown words/sounds. The upstream libraries may attempt to handle this, but results have varied.
    - Clone the repository:
         ```bash
-        git clone https://github.com/remsky/Kokoro-FastAPI.git
+        git clone https://github.com/SelfishPig/Kokoro-FastAPI.git
         cd Kokoro-FastAPI
         ```
         
@@ -665,7 +647,7 @@ timings = requests.get(f"http://localhost:8880/v1{response.headers['x-timing-pat
 ### Hardware variants
 
 ```bash
-# GPU: Requires NVIDIA driver with CUDA 12.6+ support (~35x-100x realtime speed)
+# GPU: CUDA 12.8 with cu128 PyTorch wheels, amd64 only (~35x-100x realtime speed)
 cd docker/gpu
 docker compose up --build
 
@@ -863,7 +845,7 @@ Visit [NVIDIA Container Toolkit installation](https://docs.nvidia.com/datacenter
 
 ### CUDA driver mismatch / RTX 50-series
 
-Use the `latest-cu128` image for RTX 50-series cards. The GPU runtime image
+The `gpu:latest` image uses CUDA 12.8 and cu128 PyTorch wheels. The runtime image
 clears the CUDA base image's inherited `LD_LIBRARY_PATH` so the NVIDIA Container
 Toolkit can supply the host driver instead of loading an incompatible bundled
 compatibility library. If driver initialization still fails, confirm that the
@@ -871,7 +853,7 @@ toolkit is configured and verify that the container can see the GPU:
 
 ```bash
 docker run --rm --runtime=nvidia --gpus all \
-  ghcr.io/remsky/kokoro-fastapi-gpu:latest-cu128 nvidia-smi
+  ghcr.io/selfishpig/kokoro-fastapi-gpu:latest nvidia-smi
 ```
 
 </details>

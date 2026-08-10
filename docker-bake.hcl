@@ -8,7 +8,7 @@ variable "REGISTRY" {
 }
 
 variable "OWNER" {
-    default = "remsky"
+    default = "selfishpig"
 }
 
 variable "REPO" {
@@ -79,11 +79,11 @@ target "_gpu_base" {
     dockerfile = "docker/gpu/Dockerfile.optimized"
     labels = {
         "org.opencontainers.image.title"       = "Kokoro-FastAPI (GPU)"
-        "org.opencontainers.image.description" = "Kokoro TTS served via FastAPI. NVIDIA GPU build (CUDA 12.6 amd64 / CUDA 12.9 arm64; cu128 tag for Blackwell)."
+        "org.opencontainers.image.description" = "Kokoro TTS served via FastAPI. NVIDIA GPU build with CUDA 12.8 and cu128 PyTorch wheels. amd64 only."
     }
     annotations = [
         "org.opencontainers.image.title=Kokoro-FastAPI (GPU)",
-        "org.opencontainers.image.description=Kokoro TTS served via FastAPI. NVIDIA GPU build (CUDA 12.6 amd64 / CUDA 12.9 arm64; cu128 tag for Blackwell).",
+        "org.opencontainers.image.description=Kokoro TTS served via FastAPI. NVIDIA GPU build with CUDA 12.8 and cu128 PyTorch wheels. amd64 only.",
     ]
 }
 
@@ -100,25 +100,10 @@ target "cpu" {
     ]
 }
 
-# GPU multi-platform: dispatches to per-arch targets so each gets its own CUDA_VERSION
+# The published GPU image is amd64-only.
 group "gpu" {
-    targets = ["gpu-amd64", "gpu-arm64"]
+    targets = ["gpu-amd64"]
 }
-
-# Base settings for AMD ROCm builds
-target "_rocm_base" {
-    inherits = ["_common"]
-    dockerfile = "docker/rocm/Dockerfile"
-    labels = {
-        "org.opencontainers.image.title"       = "Kokoro-FastAPI (ROCm)"
-        "org.opencontainers.image.description" = "Kokoro TTS served via FastAPI. AMD ROCm build (amd64 only)."
-    }
-    annotations = [
-        "org.opencontainers.image.title=Kokoro-FastAPI (ROCm)",
-        "org.opencontainers.image.description=Kokoro TTS served via FastAPI. AMD ROCm build (amd64 only).",
-    ]
-}
-
 
 # Individual platform targets for debugging/testing
 target "cpu-amd64" {
@@ -143,53 +128,12 @@ target "gpu-amd64" {
     inherits = ["_gpu_base"]
     platforms = ["linux/amd64"]
     args = {
-        CUDA_VERSION = "12.6.3"
-    }
-    cache-from = ["type=registry,ref=${REGISTRY}/${OWNER}/${REPO}-cache:gpu-amd64"]
-    # Per-arch tag carries the wheel variant so it parallels gpu-cu128-amd64.
-    # The published manifest still resolves to :VERSION / :VERSION-cu126 via release.yml.
-    tags = [
-        "${REGISTRY}/${OWNER}/${REPO}-gpu:${VERSION}-cu126-amd64"
-    ]
-}
-
-target "gpu-arm64" {
-    inherits = ["_gpu_base"]
-    platforms = ["linux/arm64"]
-    args = {
-        CUDA_VERSION = "12.9.1"
-    }
-    cache-from = ["type=registry,ref=${REGISTRY}/${OWNER}/${REPO}-cache:gpu-arm64"]
-    # aarch64 uses cu129 wheels (no cu126 aarch64 wheels exist on pytorch.org).
-    tags = [
-        "${REGISTRY}/${OWNER}/${REPO}-gpu:${VERSION}-cu129-arm64"
-    ]
-}
-
-# Blackwell / RTX 50-series variant: cu128 torch wheels (sm_120 kernels).
-# x86_64 only; published as a -cu128 suffixed tag on the existing -gpu package.
-target "gpu-cu128-amd64" {
-    inherits = ["_gpu_base"]
-    platforms = ["linux/amd64"]
-    args = {
-        # 12.8.x is the first CUDA toolkit with Blackwell (sm_120) support and is
-        # what the cu128 torch wheels are built against. Keep base + wheel aligned.
         CUDA_VERSION = "12.8.1"
         GPU_EXTRA = "gpu-cu128"
     }
-    cache-from = ["type=registry,ref=${REGISTRY}/${OWNER}/${REPO}-cache:gpu-cu128-amd64"]
+    cache-from = ["type=registry,ref=${REGISTRY}/${OWNER}/${REPO}-cache:gpu-amd64"]
     tags = [
-        "${REGISTRY}/${OWNER}/${REPO}-gpu:${VERSION}-cu128-amd64"
-    ]
-}
-
-# AMD ROCm only supports x86
-target "rocm-amd64" {
-    inherits = ["_rocm_base"]
-    platforms = ["linux/amd64"]
-    cache-from = ["type=registry,ref=${REGISTRY}/${OWNER}/${REPO}-cache:rocm-amd64"]
-    tags = [
-        "${REGISTRY}/${OWNER}/${REPO}-rocm:${VERSION}-amd64"
+        "${REGISTRY}/${OWNER}/${REPO}-gpu:${VERSION}-amd64"
     ]
 }
 
@@ -202,18 +146,12 @@ target "cpu-dev" {
 
 target "gpu-dev" {
     inherits = ["_gpu_base"]
-    cache-from = ["type=registry,ref=${REGISTRY}/${OWNER}/${REPO}-cache:gpu-amd64"]
-    tags = ["${REGISTRY}/${OWNER}/${REPO}-gpu:dev"]
-}
-
-target "gpu-cu128-dev" {
-    inherits = ["_gpu_base"]
     args = {
         CUDA_VERSION = "12.8.1"
         GPU_EXTRA = "gpu-cu128"
     }
-    cache-from = ["type=registry,ref=${REGISTRY}/${OWNER}/${REPO}-cache:gpu-cu128-amd64"]
-    tags = ["${REGISTRY}/${OWNER}/${REPO}-gpu:dev-cu128"]
+    cache-from = ["type=registry,ref=${REGISTRY}/${OWNER}/${REPO}-cache:gpu-amd64"]
+    tags = ["${REGISTRY}/${OWNER}/${REPO}-gpu:dev"]
 }
 
 group "dev" {
@@ -226,17 +164,17 @@ group "cpu-all" {
 }
 
 group "gpu-all" {
-    targets = ["gpu-amd64", "gpu-arm64", "gpu-cu128-amd64"]
-}
-
-group "rocm-all" {
-    targets = ["rocm-amd64"]
+    targets = ["gpu-amd64"]
 }
 
 group "all" {
-    targets = ["cpu", "gpu-amd64", "gpu-arm64", "gpu-cu128-amd64", "rocm-amd64"]
+    targets = ["cpu", "gpu-amd64"]
 }
 
 group "individual-platforms" {
-    targets = ["cpu-amd64", "cpu-arm64", "gpu-amd64", "gpu-arm64", "gpu-cu128-amd64", "rocm-amd64"]
+    targets = ["cpu-amd64", "cpu-arm64", "gpu-amd64"]
+}
+
+group "default" {
+    targets = ["cpu", "gpu-amd64"]
 }

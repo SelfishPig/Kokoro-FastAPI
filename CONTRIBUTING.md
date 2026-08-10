@@ -10,7 +10,7 @@ We use `uv` for managing Python environments and dependencies, and `ruff` for li
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/remsky/Kokoro-FastAPI.git
+    git clone https://github.com/SelfishPig/Kokoro-FastAPI.git
     cd Kokoro-FastAPI
     ```
 

@@ -1,17 +1,15 @@
 name: kokoro-fastapi-gpu
 services:
   kokoro-tts:
-    # image: ghcr.io/remsky/kokoro-fastapi-gpu:v${VERSION}
+    # image: ghcr.io/selfishpig/kokoro-fastapi-gpu:v${VERSION}
     build:
       context: ../..
       dockerfile: docker/gpu/Dockerfile.optimized
       cache_from:
-        - ghcr.io/remsky/kokoro-fastapi-cache:gpu-amd64
-        - ghcr.io/remsky/kokoro-fastapi-cache:gpu-arm64
+        - ghcr.io/selfishpig/kokoro-fastapi-cache:gpu-amd64
       args:
-        # Defaults cover Maxwell through Ada. RTX 50-series needs gpu-cu128 / 12.8.1.
-        GPU_EXTRA: ${KOKORO_GPU_EXTRA:-gpu}
-        CUDA_VERSION: ${KOKORO_CUDA_VERSION:-12.6.3}
+        GPU_EXTRA: ${KOKORO_GPU_EXTRA:-gpu-cu128}
+        CUDA_VERSION: ${KOKORO_CUDA_VERSION:-12.8.1}
     volumes:
       - ../../api:/app/api
       - ../../web:/app/web  # hot reload the web player, files are read per request

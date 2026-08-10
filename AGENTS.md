@@ -44,4 +44,4 @@ The general instructions must also still be followed, same as any contributor, a
 - Trust me on the above point. The dependencies are touchy for this stack. 
 - Local (non-Docker) runs need espeak-ng installed and on PATH; the Docker images handle this separately.
 - Japanese support (`misaki[ja]`) requires the full UniDic dictionary (~526MB), not `unidic-lite`. CI caches it.
-- The release/publish workflow triggers itself on push to the `release` branch. It should never never be triggered manually. Tag @remsky to do so. 
+- The release/publish workflow triggers itself on push to the `release` branch. It must not be triggered manually. Tag @SelfishPig to do so.
