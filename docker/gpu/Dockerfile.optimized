@@ -91,7 +91,10 @@ RUN chmod +x ./entrypoint.sh
 USER appuser
 
 # Set environment variables
+# Torch wheels carry the matching CUDA libraries. Avoid inherited CUDA compat
+# paths taking precedence over the host driver injected by the NVIDIA runtime.
 ENV PATH="/app/.venv/bin:$PATH" \
+    LD_LIBRARY_PATH="" \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app:/app/api \
     UV_LINK_MODE=copy \

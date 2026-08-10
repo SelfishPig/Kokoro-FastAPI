@@ -7,18 +7,12 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
-  workflow_dispatch: # Manual trigger - explicitly specify branch
-    inputs:
-      branch_name:
-        description: 'Branch to build from (required)'
-        required: true
-        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.branch_name || github.ref_name }}
+  group: release-${{ github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -32,11 +26,7 @@ jobs:
       - name: Resolve source ref
         id: resolve-ref
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "source_ref=${{ inputs.branch_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "source_ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          fi
+          echo "source_ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -78,7 +68,7 @@ jobs:
       BUILDKIT_STEP_LOG_MAX_SIZE: 10485760
       VERSION: ${{ needs.prepare-release.outputs.version_tag }}
       REGISTRY: ${{ vars.REGISTRY || 'ghcr.io' }}
-      OWNER: ${{ vars.OWNER || 'remsky' }}
+      OWNER: ${{ vars.OWNER || github.repository_owner }}
       REPO: ${{ vars.REPO || 'kokoro-fastapi' }}
     strategy:
       matrix:
@@ -137,6 +127,8 @@ jobs:
           PLATFORM="${{ matrix.platform }}"
           BUILD_TARGET="${{ matrix.build_target }}"
           VERSION_TAG="${{ needs.prepare-release.outputs.version_tag }}"
+          OWNER="$(echo "${OWNER}" | tr '[:upper:]' '[:lower:]')"
+          export OWNER
 
           echo "Building ${PLATFORM} image for ${BUILD_TARGET} version ${VERSION_TAG}"
 
@@ -158,7 +150,7 @@ jobs:
       packages: write
     env:
       REGISTRY: ${{ vars.REGISTRY || 'ghcr.io' }}
-      OWNER: ${{ vars.OWNER || 'remsky' }}
+      OWNER: ${{ vars.OWNER || github.repository_owner }}
       REPO: ${{ vars.REPO || 'kokoro-fastapi' }}
     strategy:
       matrix:
@@ -176,7 +168,7 @@ jobs:
           VERSION_TAG="${{ needs.prepare-release.outputs.version_tag }}"
           TARGET="${{ matrix.build_target }}"
           REGISTRY="${{ env.REGISTRY }}"
-          OWNER="${{ env.OWNER }}"
+          OWNER="$(echo "${{ env.OWNER }}" | tr '[:upper:]' '[:lower:]')"
           REPO="${{ env.REPO }}"
 
           # Resolve the package name, manifest tag(s), and source images per target.

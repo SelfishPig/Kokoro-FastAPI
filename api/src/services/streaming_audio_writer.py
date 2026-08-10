@@ -34,7 +34,12 @@ class _AudioTempoFilter:
 
     def _initialize(self, frame: av.AudioFrame) -> None:
         self.graph = av.filter.Graph()
-        self.source = self.graph.add_abuffer(template=frame)
+        self.source = self.graph.add_abuffer(
+            sample_rate=frame.sample_rate,
+            format=frame.format.name,
+            layout=frame.layout.name,
+            time_base=frame.time_base,
+        )
         previous = self.source
 
         for factor in self._factors():

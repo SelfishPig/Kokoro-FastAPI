@@ -24,6 +24,9 @@ Per-PR attribution and contributor credits are published automatically on the co
 ### Changed
 - Dropped unreachable list form of `voice` from the speech parser and unused `VoiceCombineRequest` schema.
 
+### Fixed
+- GPU images no longer prioritize CUDA compatibility libraries over the host NVIDIA driver, fixing initialization on affected RTX 50-series hosts.
+
 ### Removed
 - Legacy Gradio UI (`ui/`) code cruft; superseded by the web player since ~v0.2.0
 - Legacy ONNX config compose vars, endpoints e.g `/debug/session_pools`.

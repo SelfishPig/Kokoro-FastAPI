@@ -94,6 +94,9 @@ docker run --device=/dev/kfd --device=/dev/dri -p 8880:8880 ghcr.io/remsky/kokor
         # or cd docker/rocm  # For AMD GPU (ROCm, experimental, amd64 only)
         docker compose up --build
 
+        # RTX 50-series / Blackwell local build:
+        KOKORO_GPU_EXTRA=gpu-cu128 KOKORO_CUDA_VERSION=12.8.1 docker compose up --build
+
         # *Note for Apple Silicon (M1/M2/M3) users:
         # The Docker GPU image is CUDA-only and won't run on Apple Silicon. With Docker, use `docker/cpu`.
         # For native MPS (Apple GPU) acceleration, run directly via UV with `./start-gpu_mac.sh`.
@@ -857,6 +860,19 @@ services:
 Prerequisites: NVIDIA GPU, drivers, and container toolkit must be properly configured.
 
 Visit [NVIDIA Container Toolkit installation](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) for more detailed information
+
+### CUDA driver mismatch / RTX 50-series
+
+Use the `latest-cu128` image for RTX 50-series cards. The GPU runtime image
+clears the CUDA base image's inherited `LD_LIBRARY_PATH` so the NVIDIA Container
+Toolkit can supply the host driver instead of loading an incompatible bundled
+compatibility library. If driver initialization still fails, confirm that the
+toolkit is configured and verify that the container can see the GPU:
+
+```bash
+docker run --rm --runtime=nvidia --gpus all \
+  ghcr.io/remsky/kokoro-fastapi-gpu:latest-cu128 nvidia-smi
+```
 
 </details>
 

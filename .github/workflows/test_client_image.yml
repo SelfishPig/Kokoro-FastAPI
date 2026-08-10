@@ -41,7 +41,7 @@ jobs:
       contents: read
     env:
       REGISTRY: ${{ vars.REGISTRY || 'ghcr.io' }}
-      OWNER: ${{ vars.OWNER || 'remsky' }}
+      OWNER: ${{ vars.OWNER || github.repository_owner }}
       IMAGE_NAME: ${{ vars.TEST_CLIENT_IMAGE_NAME || 'tts-api-test-client' }}
     steps:
       - uses: actions/checkout@v5
@@ -49,6 +49,7 @@ jobs:
       - name: Resolve image refs
         id: refs
         run: |
+          OWNER="$(echo "${OWNER}" | tr '[:upper:]' '[:lower:]')"
           BASE="${REGISTRY}/${OWNER}/${IMAGE_NAME}"
           # Manual dispatch picks the tag; path-triggered builds always
           # publish `latest` plus a short-sha tag for traceability.
